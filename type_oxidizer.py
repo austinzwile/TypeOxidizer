@@ -21,23 +21,6 @@ def register_rust_types(bv):
 		if result is not None:
 			bv.define_user_type(rust_type, result[0])
 
-def update_variable_types(bv, type_mapping):
-	for func in bv.functions:
-		for var in func.vars:
-			if str(var.type) in type_mapping:
-				new_type = Type.named_type_from_registered_type(bv, type_mapping[str(var.type)])
-				if new_type:
-					func.create_user_var(var, new_type, var.name)
-					print(f"Updated {var.name} in function {func.name} from {var.type} to {type_mapping[str(var.type)]}")
-
-	for var in bv.data_vars:
-		var_type = bv.data_vars[var].type
-		if str(var_type) in type_mapping:
-			new_type = Type.named_type_from_registered_type(bv, type_mapping[str(var_type)])
-			if new_type:
-				bv.define_user_data_var(var, new_type)
-				print(f"Updated global variable at {hex(var)} from {var_type} to {type_mapping[str(var_type)]}")
-
 def update_function_return_types(bv, type_mapping):
 	for func in bv.functions:
 		func_return_type = func.type.return_value
@@ -46,12 +29,35 @@ def update_function_return_types(bv, type_mapping):
 			if new_return_type:
 				new_func_type = Type.function(new_return_type, func.type.parameters, func.type.calling_convention, func.type.has_variable_arguments)
 				func.set_user_type(new_func_type)
-				print(f"Updated return type of function {func.name} from {func_return_type} to {type_mapping[str(func_return_type)]}")
+				print(f"Updated return type of {func.name} to {str(new_return_type)}")
 
-def oxidize_types(bv):
+def update_local_variable_types(bv, type_mapping):
+	for func in bv.functions:
+		for var in func.vars:
+			if str(var.type) in type_mapping:
+				new_type = Type.named_type_from_registered_type(bv, type_mapping[str(var.type)])
+				if new_type:
+					func.create_user_var(var.storage, new_type, var.name)
+					print(f"Updated variable {var.name} in {func.name} from {var.type} to {type_mapping[str(var.type)]}")
+
+def update_global_variable_types(bv, type_mapping):
+	for var in bv.data_vars:
+		var_type = bv.data_vars[var].type
+		if str(var_type) in type_mapping:
+			new_type = Type.named_type_from_registered_type(bv, type_mapping[str(var_type)])
+			if new_type:
+				bv.define_user_data_var(var, new_type)
+				print(f"Updated global variable at {hex(var)} from {var_type} to {type_mapping[str(var_type)]}")
+
+def oxidize_types(bv, type_mapping):
+	update_function_return_types(bv, type_mapping)
+	update_local_variable_types(bv, type_mapping)
+	update_global_variable_types(bv, type_mapping)
+
+def convert_to_rust_types(bv):
 	register_rust_types(bv)
 
-	type_mapping = {
+	c_to_rust_type_mapping = {
 		"uint8_t": "u8",
 		"uint16_t": "u16",
 		"uint32_t": "u32",
@@ -63,13 +69,40 @@ def oxidize_types(bv):
 		"float": "f32",
 		"double": "f64",
 		"size_t": "usize",
-		"ptrdiff_t": "isize"
-    }
+		"ssize_t": "isize"
+	}
 
-	update_variable_types(bv, type_mapping)
-	update_function_return_types(bv, type_mapping)
+	oxidize_types(bv, c_to_rust_type_mapping)
+	print("Converted to Rust types.")
 
-# TODO: Register this as a plugin and not a snippet and enable toggle functionality via GUI.
+def revert_to_c_types(bv):
+	rust_to_c_type_mapping = {
+		"u8": "uint8_t",
+		"u16": "uint16_t",
+		"u32": "uint32_t",
+		"u64": "uint64_t",
+		"i8": "int8_t",
+		"i16": "int16_t",
+		"i32": "int32_t",
+		"i64": "int64_t",
+		"f32": "float",
+		"f64": "double",
+		"usize": "size_t",
+		"isize": "ssize_t"
+	}
 
-# Run the snippet directly
-oxidize_types(bv)
+	oxidize_types(bv, rust_to_c_type_mapping)
+	print("Reverted to C types.")
+
+# Register the plugin
+PluginCommand.register(
+	"Convert from C to Rust Types",
+	"Convert all C types to their Rust equivalents in the binary.",
+	convert_to_rust_types
+)
+
+PluginCommand.register(
+	"Revert to C Types from Rust",
+	"Revert all Rust types back to their original C equivalents in the binary.",
+	revert_to_c_types
+)
