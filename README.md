@@ -1,4 +1,4 @@
-# TypeOxidizer (v1.2.1)
+# TypeOxidizer (v1.2.2)
 Author: **azw / austinzwile**
 
 _TypeOxidizer converts the C-Style types in your HLIL / decompilation to their Rust equivalents for easier reading / interpretation and shorter decompilation._
@@ -72,9 +72,9 @@ The following dependencies are required for this plugin:
 
 ## Todo
 
-- [ ] Add proper conversion of types when typecasting. The decompilation currently doesn't allow for the retyping of anything on the right side of an equals sign so I will have to figure that out.
-- [ ] Implement a drop-down/content menu to allow for selective conversion between C and Rust.
+- [X] Implement a drop-down/content menu to allow for selective conversion between C and Rust.
 - [ ] Handle structs and typedefs. The types within already defined type definitions don't get handled right.
+- [ ] Add proper conversion of types when typecasting. The decompilation currently doesn't allow for the retyping of anything on the right side of an equals sign so I will have to figure that out. Possibly for workflows.
 
 ## Required Dependencies
 
