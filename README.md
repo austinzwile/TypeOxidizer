@@ -1,4 +1,4 @@
-# TypeOxidizer (v1.2)
+# TypeOxidizer (v1.2.1)
 Author: **azw / austinzwile**
 
 _TypeOxidizer converts the C-Style types in your HLIL / decompilation to their Rust equivalents for easier reading / interpretation and shorter decompilation._
